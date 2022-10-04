@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+<title>WebGL Avoider</title>
+
+
+<style>
+spacebut 
+{
+	border-style:solid;
+	border-color:#FFFFFF;
+	border-width:1px;border-radius:5px;
+	color:#FFFFFF;
+	font-size:30px;
+	text-align:center;
+	vertical-align:middle;
+	line-height:2.0;
+	-webkit-user-select: none; /* Safari */        
+	-moz-user-select: none; /* Firefox */
+	-ms-user-select: none; /* IE10+/Edge */
+	user-select: none; /* Standard */
+}
+</style>
+<script id="vertex-shader" type="x-shader/x-vertex">
+attribute vec4 vColor;
+varying vec4 color;
+
+attribute vec4 vPosition;
+attribute vec4 vNormal;
+varying vec3 N, L, E;
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+uniform vec4 lightPosition;
+
+void main()
+{
+
+	vec3 light=lightPosition.xyz;
+    vec3 pos = -(modelViewMatrix * vPosition).xyz;
+    L = normalize( light - pos );
+    E =  -normalize(pos);
+    N = normalize( (modelViewMatrix*vNormal).xyz);
+    gl_Position = projectionMatrix * modelViewMatrix * vPosition;
+    color = vColor;
+}
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+precision mediump float;
+
+varying vec4 color;
+
+uniform vec4 ambientProduct;
+uniform vec4 lightDiffuse;
+uniform vec4 specularProduct;
+uniform float shininess;
+varying vec3 N, L, E;
+void main()
+{
+	vec4 fColor;
+    
+    vec3 H = normalize( L + E );
+    vec4 ambient = ambientProduct;
+
+    float Kd = max( dot(L, N), 0.0 );
+    vec4  diffuse = Kd*lightDiffuse*color;
+
+    float Ks = pow( max(dot(N, H), 0.0), shininess );
+    vec4  specular = Ks * specularProduct;
+    
+    if( dot(L, N) < 0.0 ) specular = vec4(0.0, 0.0, 0.0, 1.0);
+
+    fColor = ambient + diffuse +specular;
+    fColor.a = 1.0;
+
+    gl_FragColor = fColor;
+}
+</script>
+
+<script type="text/javascript" src="Common/webgl-utils.js"></script>
+<script type="text/javascript" src="Common/initShaders.js"></script>
+<script type="text/javascript" src="Common/MV.js"></script>
+<script type="text/javascript" src="project.js"></script>
+
+</head>   
+
+<body id="body" style="overflow-x:hidden;overflow-y:hidden">
+<canvas id="gl-canvas" onclick="fullscreenAndNextClickCaptureMouse()" width="512" height="512">
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+<canvas id="joy-canvas" onmousedown="joyStart(event)" width="120" height="120">
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+<spacebut id="spacebut" onmousedown="doJumpStart(event)">SPACE</spacebut>
+</body>
+</html>
